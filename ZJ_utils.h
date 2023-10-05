@@ -5,25 +5,6 @@
 
 namespace ZJ {
 
-    template    <typename Category,
-                 typename T,
-                 typename Distance = ptrdiff_t,
-                 typename Pointer = T*,
-                 typename Reference = T&>
-    struct iterator_base {
-        typedef T           value_type;
-        typedef Pointer     pointer;
-        typedef Reference   reference;
-        typedef Distance    difference_type;
-        typedef Category    iterator_category;
-    };
-
-    struct input_iterator_tag { };
-    struct output_iterator_tag { };
-    struct forward_iterator_tag : public input_iterator_tag { };
-    struct bidirectional_iterator_tag : public forward_iterator_tag { };
-    struct random_access_iterator_tag : public bidirectional_iterator_tag { };
-
     template <typename T>
     inline void ZJ_construct(T* p, const T& value);
     template <typename T>
@@ -93,13 +74,13 @@ namespace ZJ {
 
     template <typename Iter, typename Value>
     inline void ZJ_construct(Iter p, const Value& value) {
-        new(&*p) Value(value);
+        new(const_cast<Value*>(&*p)) Value(value);
     }
 
     template <typename Iter, typename Value>
     inline void ZJ_construct(Iter first, Iter last, const Value& value) {
-        for(Iter _first(first); _first != last; ++_first)
-            ZJ_construct(_first, value);
+        for(; first != last; ++first)
+            ZJ_construct(first, value);
     }
 
     template <typename Iter>
@@ -107,8 +88,8 @@ namespace ZJ {
 
     template <typename Iter>
     inline void __ZJ_destroy(Iter first, Iter last, FALSE_TAG) {
-        for(Iter _first(first); _first != last; ++_first)
-            ZJ_destroy(_first);
+        for(; first != last; ++first)
+            ZJ_destroy(first);
     }
 
     template <typename Iter>
@@ -139,10 +120,9 @@ namespace ZJ {
 
     template <typename Iter>
     inline Iter __ZJ_uninitialized_copy(Iter first, Iter last, Iter dest, FALSE_TAG) {
-        Iter _first(first), _dest(dest);
-        for(; _first != last; ++_first, ++_dest)
-            ZJ_construct(_dest, *_first);
-        return _dest;
+        for(; first != last; ++first, ++dest)
+            ZJ_construct(dest, *first);
+        return dest;
     }
 
     template <typename Iter>
@@ -158,8 +138,8 @@ namespace ZJ {
 
     template <typename Iter, typename Value>
     inline void __ZJ_uninitialized_fill(Iter first, Iter last, const Value& value, FALSE_TAG) {
-        for(Iter _first(first); _first != last; ++_first)
-            ZJ_construct(_first, value);
+        for(; first != last; ++first)
+            ZJ_construct(first, value);
     }
 
     template <typename Iter, typename Value>
@@ -175,10 +155,9 @@ namespace ZJ {
 
     template<typename Iter, typename Value>
     inline Iter __ZJ_uninitialized_fill_n(Iter dest, size_t n, const Value& value, FALSE_TAG) {
-        Iter _dest(dest);
-        for(; n > 0; ++_dest, --n)
-            ZJ_construct(_dest, value);
-        return _dest;
+        for(; n > 0; ++dest, --n)
+            ZJ_construct(dest, value);
+        return dest;
     }
 
     template <typename Iter, typename Value>

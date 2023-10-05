@@ -5,95 +5,53 @@
 #include <cstddef>
 #include "ZJ_alloc.h"
 #include "ZJ_utils.h"
+#include "ZJ_iterator.h"
 #include <iostream>
 
 namespace ZJ {
 
     template <typename T>
-    class vector_const_iterator;
-    template <typename T>
-    class vector_iterator;
-
-
-    template <typename T>
-    class vector_const_iterator : public iterator_base<random_access_iterator_tag, T> {
+    class vector_iterator : public random_access_iterator<T> {
         private : 
             T* iter;
         
         public : 
-            friend class vector_iterator<T>;
-
-            vector_const_iterator() : iter(0) {}
-
-            vector_const_iterator(T* ptr) : iter(ptr) {}
-
-            vector_const_iterator(const vector_iterator<T>& it) : iter(it.iter) {}
-
-            vector_const_iterator(const vector_const_iterator<T>& it) : iter(it.iter) {}
-
-            vector_const_iterator<T>& operator=(const vector_iterator<T>& rhs) {
-                iter = rhs.iter;
-                return *this;
-            }
-            
-            vector_const_iterator<T>& operator=(const vector_const_iterator<T>& rhs) {
-                iter = rhs.iter;
-                return *this;
-            }
-
-            vector_const_iterator<T>& operator=(T* rhs) {
-                iter = rhs;
-                return *this;
-            }
-
-            T& operator*() const {return *iter;}
-
-            T* operator->() const {return iter;}
-
-            vector_iterator<T> operator+ (size_t n) const {
-                return vector_iterator<T>(iter + n);
-            }
-
-            vector_iterator<T> operator- (size_t n) const {
-                return vector_iterator<T>(iter - n);
-            }
-
-            size_t operator- (const vector_iterator<T>& rhs) const {
-                return (size_t)(iter - rhs.iter);
-            }
-
-            bool operator== (const vector_iterator<T>& rhs) const {
-                return iter == rhs.iter;
-            }
-
-            bool operator!= (const vector_iterator<T>& rhs) const {
-                return iter != rhs.iter;
-            }
-    };
-
-    template <typename T>
-    class vector_iterator : public iterator_base<random_access_iterator_tag, T> {
-        private : 
-            T* iter;
-        
-        public : 
-            friend class vector_const_iterator<T>;
+            template <typename U>
+            friend class vector_iterator;
 
             vector_iterator() : iter(0) {}
 
             vector_iterator(T* ptr) : iter(ptr) {}
 
-            vector_iterator(const vector_iterator<T>& it) : iter(it.iter) {}
+            vector_iterator(const vector_iterator& it) : iter(it.iter) {}
 
-            vector_iterator(const vector_const_iterator<T>& it) : iter(it.iter) {}
-
-            vector_iterator<T>& operator=(const vector_iterator<T>& rhs) {
-                iter = rhs.iter;
+            vector_iterator<T>& operator++ () override { //covariant return type :D
+                ++iter;
                 return *this;
             }
 
-            vector_iterator<T>& operator=(const vector_const_iterator<T>& rhs) {
-                iter = rhs.iter;
+            vector_iterator<T>& operator-- () override {
+                --iter;
+                return *this;
+            }
+
+            vector_iterator<T>& operator+= (size_t n) override {
+                iter += n;
+                return *this;
+            }
+
+            vector_iterator<T>& operator-= (size_t n) override {
+                iter -= n;
+                return *this;
+            }
+
+            T& operator*() override {return *iter;}
+
+            T& operator*() const {return *iter;}
+
+            template <typename U> // might be const_iterator
+            vector_iterator<T>& operator=(const vector_iterator<U>& rhs) {
+                iter = const_cast<T*>(rhs.iter);
                 return *this;
             }
 
@@ -102,39 +60,8 @@ namespace ZJ {
                 return *this;
             }
 
-            T& operator*() const {return *iter;}
-
-            T* operator->() const {return iter;}
-
-            vector_iterator<T> operator++ () {
-                ++iter;
-                return *this;
-            }
-
-            vector_iterator<T> operator++ (int) {
-                vector_iterator<T> res(*this);
-                ++iter;
-                return res;
-            }
-
-            vector_iterator<T> operator-- () {
-                --iter;
-                return *this;
-            }
-
-            vector_iterator<T> operator-- (int) {
-                vector_iterator<T> res(*this);
-                --iter;
-                return res;
-            }
-
             vector_iterator<T> operator+ (size_t n) const {
                 return vector_iterator<T>(iter + n);
-            }
-
-            vector_iterator<T> operator+= (size_t n) {
-                iter += n;
-                return *this;
             }
 
             vector_iterator<T> operator- (size_t n) const {
@@ -145,9 +72,16 @@ namespace ZJ {
                 return (size_t)(iter - rhs.iter);
             }
 
-            vector_iterator<T> operator-= (size_t n) {
-                iter -= n;
-                return *this;
+            vector_iterator<T> operator++ (int) {
+                vector_iterator<T> res(*this);
+                ++iter;
+                return res;
+            }
+
+            vector_iterator<T> operator-- (int) {
+                vector_iterator<T> res(*this);
+                --iter;
+                return res;
             }
 
             bool operator== (const vector_iterator<T>& rhs) const {
@@ -166,7 +100,8 @@ namespace ZJ {
             typedef T*                          pointer;
             //typedef T*                          iterator;
             typedef vector_iterator<T>          iterator;
-            typedef vector_const_iterator<T>    const_iterator;
+            typedef vector_iterator<const T>    const_iterator;
+            //typedef vector_const_iterator<T>    const_iterator;
             typedef T&                          reference;
             typedef size_t                      size_type;
             typedef ptrdiff_t                   difference_type;
@@ -189,9 +124,9 @@ namespace ZJ {
 
             vector(long n, const T& value) {alloc_construct((size_type)n, value); }
 
-            vector(vector<T>& v) {
+            vector(const vector<T>& v) {
                 start = allocator<T>::allocate(v.size());
-                finish = ZJ_uninitialized_copy(v.begin(), v.end(), begin());
+                finish = ZJ_uninitialized_copy(v.begin(), v.end(), cbegin());
                 storage_end = finish;
             }
 
@@ -204,16 +139,24 @@ namespace ZJ {
                 return start;
             }
 
+            const_iterator begin() const {
+                return const_iterator(&*start);
+            }
+
             const_iterator cbegin() const {
-                return const_iterator(start);
+                return const_iterator(&*start);
             }
 
             iterator end() {
                 return finish;
             }
 
+            const_iterator end() const {
+                return const_iterator(&*finish);
+            }
+
             const_iterator cend() const {
-                return const_iterator(finish);
+                return const_iterator(&*finish);
             }
 
             size_type size() const {
