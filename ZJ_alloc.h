@@ -144,7 +144,7 @@ namespace ZJ {
             }
     };
 
-    // memory pool
+    // memory pool - to be implemented :(
     class __allocator_mp {};
 
     #define __ALLOCATOR__MALLOC__  // here which allocator is specify

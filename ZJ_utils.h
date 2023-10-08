@@ -5,21 +5,20 @@
 
 namespace ZJ {
 
-    template <typename T>
-    inline void ZJ_construct(T* p, const T& value);
-    template <typename T>
-    inline void ZJ_construct(T* first, T* last, const T& value);
-    template <typename T>
-    inline void ZJ_destroy(T* p);
-    template <typename T>
-    inline void ZJ_destroy(T* first, T* last);
-    template <typename T>
-    inline T* ZJ_uninitialized_copy(T* first, T* last, T* dest);
-    template <typename T>
-    inline void ZJ_uninitialized_fill(T* first, T* last, const T& value);
-    template <typename T>
-    inline T* ZJ_uninitialized_fill_n(T* first, size_t n, const T& value);
-
+    template <typename OutputIter, typename Value>
+    inline void ZJ_construct(OutputIter p, const Value& value);
+    template <typename OutputIter, typename Value>
+    inline void ZJ_construct(OutputIter first, OutputIter last, const Value& value);
+    template <typename OutputIter>
+    inline void ZJ_destroy(OutputIter p);
+    template <typename OutputIter>
+    inline void ZJ_destroy(OutputIter first, OutputIter last);
+    template <typename InputIter, typename OutputIter>
+    inline OutputIter ZJ_uninitialized_copy(InputIter first, InputIter last, OutputIter dest);
+    template <typename OutputIter, typename Value>
+    inline void ZJ_uninitialized_fill(OutputIter first, OutputIter last, const Value& value);
+    template <typename OutputIter, typename Value>
+    inline OutputIter ZJ_uninitialized_fill_n(OutputIter dest, size_t n, const Value& value);
 
     struct TRUE_TAG {};
     struct FALSE_TAG {};
@@ -72,97 +71,100 @@ namespace ZJ {
             typedef TRUE_TAG IS_POD;
     };
 
-    template <typename Iter, typename Value>
-    inline void ZJ_construct(Iter p, const Value& value) {
-        new(const_cast<Value*>(&*p)) Value(value);
+    template <typename OutputIter, typename Value>
+    inline void ZJ_construct(OutputIter p, const Value& value) {
+        //new(const_cast<Value*>(&*p)) Value(value);
+        new(&*p) Value(value);
     }
 
-    template <typename Iter, typename Value>
-    inline void ZJ_construct(Iter first, Iter last, const Value& value) {
+    template <typename OutputIter, typename Value>
+    inline void ZJ_construct(OutputIter first, OutputIter last, const Value& value) {
         for(; first != last; ++first)
             ZJ_construct(first, value);
     }
 
-    template <typename Iter>
-    inline void __ZJ_destroy(Iter first, Iter last, TRUE_TAG) {}
+    template <typename OutputIter>
+    inline void __ZJ_destroy(OutputIter first, OutputIter last, TRUE_TAG) {}
 
-    template <typename Iter>
-    inline void __ZJ_destroy(Iter first, Iter last, FALSE_TAG) {
+    template <typename OutputIter>
+    inline void __ZJ_destroy(OutputIter first, OutputIter last, FALSE_TAG) {
+        typedef typename OutputIter::value_type value_type;
         for(; first != last; ++first)
-            ZJ_destroy(first);
+            first->~value_type();
     }
 
-    template <typename Iter>
-    inline void __ZJ_destroy(Iter p, TRUE_TAG) {}
+    template <typename OutputIter>
+    inline void __ZJ_destroy(OutputIter p, TRUE_TAG) {}
 
-    template <typename Iter>
-    inline void __ZJ_destroy(Iter p, FALSE_TAG) {
-        typedef typename Iter::value_type value_type;
+    template <typename OutputIter>
+    inline void __ZJ_destroy(OutputIter p, FALSE_TAG) {
+        typedef typename OutputIter::value_type value_type;
         p->~value_type();
     }
 
-    template <typename Iter>
-    inline void ZJ_destroy(Iter p) {
-        typedef typename traits<typename Iter::value_type>::IS_POD IS_POD;
+    template <typename OutputIter>
+    inline void ZJ_destroy(OutputIter p) {
+        typedef typename traits<typename OutputIter::value_type>::IS_POD IS_POD;
         //p->~value_type();
+        __ZJ_destroy(p, IS_POD());
     }
 
-    template <typename Iter>
-    inline void ZJ_destroy(Iter first, Iter last) {
-        typedef typename traits<typename Iter::value_type>::IS_POD IS_POD;
+    template <typename OutputIter>
+    inline void ZJ_destroy(OutputIter first, OutputIter last) {
+        typedef typename traits<typename OutputIter::value_type>::IS_POD IS_POD;
         __ZJ_destroy(first, last, IS_POD());
     }
 
-    template <typename Iter>
-    inline Iter __ZJ_uninitialized_copy(Iter first, Iter last, Iter dest, TRUE_TAG) {
+    template <typename InputIter, typename OutputIter>
+    inline OutputIter __ZJ_uninitialized_copy(InputIter first, InputIter last, OutputIter dest, TRUE_TAG) {
         return copy(first, last, dest);
     }
 
-    template <typename Iter>
-    inline Iter __ZJ_uninitialized_copy(Iter first, Iter last, Iter dest, FALSE_TAG) {
+    template <typename InputIter, typename OutputIter>
+    inline OutputIter __ZJ_uninitialized_copy(InputIter first, InputIter last, OutputIter dest, FALSE_TAG) {
         for(; first != last; ++first, ++dest)
             ZJ_construct(dest, *first);
         return dest;
     }
 
-    template <typename Iter>
-    inline Iter ZJ_uninitialized_copy(Iter first, Iter last, Iter dest) {
-        typedef typename traits<typename Iter::value_type>::IS_POD IS_POD;
+    template <typename InputIter, typename OutputIter>
+    inline OutputIter ZJ_uninitialized_copy(InputIter first, InputIter last, OutputIter dest) {
+        typedef typename traits<typename InputIter::value_type>::IS_POD IS_POD;
         return __ZJ_uninitialized_copy(first, last, dest, IS_POD());
     }
 
-    template <typename Iter, typename Value>
-    inline void __ZJ_uninitialized_fill(Iter first, Iter last, const Value& value, TRUE_TAG) {
+    template <typename OutputIter, typename Value>
+    inline void __ZJ_uninitialized_fill(OutputIter first, OutputIter last, const Value& value, TRUE_TAG) {
         fill(first, last, value);
     }
 
-    template <typename Iter, typename Value>
-    inline void __ZJ_uninitialized_fill(Iter first, Iter last, const Value& value, FALSE_TAG) {
+    template <typename OutputIter, typename Value>
+    inline void __ZJ_uninitialized_fill(OutputIter first, OutputIter last, const Value& value, FALSE_TAG) {
         for(; first != last; ++first)
             ZJ_construct(first, value);
     }
 
-    template <typename Iter, typename Value>
-    inline void ZJ_uninitialized_fill(Iter first, Iter last, const Value& value) {
-        typedef typename traits<typename Iter::value_type>::IS_POD IS_POD;
+    template <typename OutputIter, typename Value>
+    inline void ZJ_uninitialized_fill(OutputIter first, OutputIter last, const Value& value) {
+        typedef typename traits<typename OutputIter::value_type>::IS_POD IS_POD;
         __ZJ_uninitialized_fill(first, last, value, IS_POD());
     }
 
-    template<typename Iter, typename Value>
-    inline Iter __ZJ_uninitialized_fill_n(Iter dest, size_t n, const Value& value, TRUE_TAG) {
+    template<typename OutputIter, typename Value>
+    inline OutputIter __ZJ_uninitialized_fill_n(OutputIter dest, size_t n, const Value& value, TRUE_TAG) {
         return fill_n(dest, n, value);
     }
 
-    template<typename Iter, typename Value>
-    inline Iter __ZJ_uninitialized_fill_n(Iter dest, size_t n, const Value& value, FALSE_TAG) {
+    template<typename OutputIter, typename Value>
+    inline OutputIter __ZJ_uninitialized_fill_n(OutputIter dest, size_t n, const Value& value, FALSE_TAG) {
         for(; n > 0; ++dest, --n)
             ZJ_construct(dest, value);
         return dest;
     }
 
-    template <typename Iter, typename Value>
-    inline Iter ZJ_uninitialized_fill_n(Iter dest, size_t n, const Value& value) {
-        typedef typename traits<typename Iter::value_type>::IS_POD IS_POD;
+    template <typename OutputIter, typename Value>
+    inline OutputIter ZJ_uninitialized_fill_n(OutputIter dest, size_t n, const Value& value) {
+        typedef typename traits<typename OutputIter::value_type>::IS_POD IS_POD;
         return __ZJ_uninitialized_fill_n(dest, n, value, IS_POD());
     }
 }

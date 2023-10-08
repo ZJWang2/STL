@@ -11,7 +11,8 @@
 namespace ZJ {
 
     template <typename T>
-    class vector_iterator : public random_access_iterator<T> {
+    //class vector_iterator : public random_access_iterator<T> {
+    class vector_iterator : public iterator_base<random_access_iterator_tag, T> {
         private : 
             T* iter;
         
@@ -23,35 +24,37 @@ namespace ZJ {
 
             vector_iterator(T* ptr) : iter(ptr) {}
 
-            vector_iterator(const vector_iterator& it) : iter(it.iter) {}
+            template <typename U>
+            vector_iterator(const vector_iterator<U>& it) : iter(it.iter) {}
 
-            vector_iterator<T>& operator++ () override { //covariant return type :D
+            T& operator*() {return *iter;}
+
+            vector_iterator<T>& operator++ () { //covariant return type :D
                 ++iter;
                 return *this;
             }
 
-            vector_iterator<T>& operator-- () override {
+            vector_iterator<T>& operator-- () {
                 --iter;
                 return *this;
             }
 
-            vector_iterator<T>& operator+= (size_t n) override {
+            vector_iterator<T>& operator+= (size_t n) {
                 iter += n;
                 return *this;
             }
 
-            vector_iterator<T>& operator-= (size_t n) override {
+            vector_iterator<T>& operator-= (size_t n) {
                 iter -= n;
                 return *this;
             }
 
-            T& operator*() override {return *iter;}
-
             T& operator*() const {return *iter;}
 
-            template <typename U> // might be const_iterator
-            vector_iterator<T>& operator=(const vector_iterator<U>& rhs) {
-                iter = const_cast<T*>(rhs.iter);
+            T* operator->() const {return iter;}
+
+            vector_iterator<T>& operator= (const vector_iterator& rhs) {
+                iter = rhs.iter;
                 return *this;
             }
 
@@ -98,10 +101,8 @@ namespace ZJ {
         public : 
             typedef T                           value_type;
             typedef T*                          pointer;
-            //typedef T*                          iterator;
             typedef vector_iterator<T>          iterator;
             typedef vector_iterator<const T>    const_iterator;
-            //typedef vector_const_iterator<T>    const_iterator;
             typedef T&                          reference;
             typedef size_t                      size_type;
             typedef ptrdiff_t                   difference_type;
@@ -113,26 +114,22 @@ namespace ZJ {
             iterator storage_end;
         
         public : 
-
             vector() : start(0), finish(0), storage_end(0) {}
 
             vector(size_type n) {alloc_construct((size_type)n, T()); }
-
+ 
             vector(size_type n, const T& value) {alloc_construct((size_type)n, value); }
 
-            vector(int n, const T& value) {alloc_construct((size_type)n, value); }
-
-            vector(long n, const T& value) {alloc_construct((size_type)n, value); }
-
             vector(const vector<T>& v) {
-                start = allocator<T>::allocate(v.size());
-                finish = ZJ_uninitialized_copy(v.begin(), v.end(), cbegin());
-                storage_end = finish;
+                start = vector_allocator::allocate(v.capacity());
+                ZJ_uninitialized_copy(v.begin(), v.end(), begin());
+                finish = start + v.size();
+                storage_end = start + v.capacity();
             }
 
             ~vector() {
                 ZJ_destroy(start, finish);
-                allocator<value_type>::deallocate(&*start, size());
+                vector_allocator::deallocate(&*start, size());
             }
 
             iterator begin() {
@@ -140,11 +137,11 @@ namespace ZJ {
             }
 
             const_iterator begin() const {
-                return const_iterator(&*start);
+                return const_iterator(start);
             }
 
             const_iterator cbegin() const {
-                return const_iterator(&*start);
+                return const_iterator(start);
             }
 
             iterator end() {
@@ -152,12 +149,16 @@ namespace ZJ {
             }
 
             const_iterator end() const {
-                return const_iterator(&*finish);
+                return const_iterator(finish);
             }
 
             const_iterator cend() const {
-                return const_iterator(&*finish);
+                return const_iterator(finish);
             }
+
+            reference front() {return *begin();}
+
+            reference back() {return *(--end());}
 
             size_type size() const {
                 return finish - start;
@@ -175,10 +176,6 @@ namespace ZJ {
                 return *(start + idx);
             }
 
-            reference front() {return *begin();}
-
-            reference back() {return *end();}
-
             void resize(size_type new_size) {
                 if(new_size < size()) {  // shrinking
                     ZJ_destroy(start + new_size, finish);
@@ -186,8 +183,11 @@ namespace ZJ {
                 }
                 else { // extending
                     iterator new_start = allocator<value_type>::allocate(new_size);
-                    finish = ZJ_uninitialized_copy(start, finish, new_start);
+                    size_type n = size();
+                    ZJ_uninitialized_copy(start, finish, new_start);
+                    ZJ_destroy(start, start + n);
                     start = new_start;
+                    finish = start + n;
                     storage_end = start + new_size;
                 }
             }
@@ -209,7 +209,7 @@ namespace ZJ {
             
             void insert(iterator pos, size_type n, const T& value) { 
                 if (n + size() > capacity()) {
-                    iterator new_start = allocator<value_type>::allocate(2 * (n + size()));
+                    iterator new_start = vector_allocator::allocate(2 * (n + size()));
                     iterator it = ZJ_uninitialized_copy(start, pos, new_start);
                     finish = ZJ_uninitialized_copy(pos, finish, it + n);
                     ZJ_uninitialized_fill_n(it, n, value);
@@ -217,7 +217,7 @@ namespace ZJ {
                     storage_end = start + 2 * (finish - start);
                 }
                 else {
-                    finish = ZJ_uninitialized_copy<value_type>(pos, finish, pos + n);
+                    finish = ZJ_uninitialized_copy(pos, finish, pos + n);
                     ZJ_uninitialized_fill_n(pos, n, value);
                 }
             }
@@ -225,7 +225,7 @@ namespace ZJ {
             void insert(iterator pos, iterator first, iterator last) {
                 size_type n = last - first;
                 if (n + size() > capacity()) {
-                    iterator new_start = allocator<value_type>::allocate(2 * (n + size()));
+                    iterator new_start = vector_allocator::allocate(2 * (n + size()));
                     iterator it = ZJ_uninitialized_copy(start, pos, new_start);
                     finish = ZJ_uninitialized_copy(pos, finish, it + n);
                     ZJ_uninitialized_copy(first, last, it);
@@ -249,7 +249,6 @@ namespace ZJ {
             iterator erase(iterator first, iterator last) {
                 iterator new_finish = ZJ_uninitialized_copy(last, finish, first);
                 ZJ_destroy(new_finish, finish);
-                //finish = new_finish;
                 finish -= (last - first);
                 return first;
             }
@@ -258,7 +257,7 @@ namespace ZJ {
         
         protected : 
             void alloc_construct(size_type n, const T& value) {
-                start = allocator<value_type>::allocate(n);
+                start = vector_allocator::allocate(n);
                 finish = start + n;
                 storage_end = finish;
                 ZJ_construct(start, finish, value);

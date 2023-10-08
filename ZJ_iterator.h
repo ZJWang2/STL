@@ -24,7 +24,7 @@ namespace ZJ {
     struct bidirectional_iterator_tag : public forward_iterator_tag { };
     struct random_access_iterator_tag : public bidirectional_iterator_tag { };
 
-    template <typename T>
+    template <typename T, typename Ptr, typename Ref, typename Diff>
     class input_iterator : public iterator_base<input_iterator_tag, T> {
         public : 
             virtual const T& operator* () = 0;
