@@ -155,6 +155,7 @@ namespace ZJ {
             typedef deque_iterator<T, T*, T&, B_SIZE>               iterator;
             typedef deque_iterator<T, const T*, const T&, B_SIZE>   const_iterator;
             typedef T&                                              reference;
+            typedef const T&                                        const_reference;
             typedef size_t                                          size_type;
             typedef ptrdiff_t                                       difference_type;
 
@@ -193,7 +194,11 @@ namespace ZJ {
 
             reference front() {return *start;}
 
+            const_reference front() const {return *start;}
+
             reference back() {return *(finish - 1);}
+
+            const_reference back() const {return *(finish - 1);}
 
             reference operator[] (size_type n) {return start[difference_type(n)];}
 
@@ -247,9 +252,15 @@ namespace ZJ {
                 }
             }
 
-            iterator insert(iterator pos, const value_type& value) {
+            iterator insert(iterator pos, const value_type& value) { 
+                return insert(pos, 1, value);
+                /*
                 difference_type index = pos - start;
-                if(index < size() / 2) {
+                if(start == finish) {
+                    push_back(value);
+                    return start;
+                }
+                else if(index < size() / 2) {
                     push_front(front());
                     move_data(start + 1, start + 1 + index, start);
                     ZJ_construct(start + index, value);
@@ -262,26 +273,33 @@ namespace ZJ {
                     ZJ_construct(finish - 1 - index, value);
                     return finish - 1 - index;
                 }
+                */
             }
 
             iterator insert(iterator pos, size_type n, const value_type& value) {
                 difference_type index = pos - start;
                 size_t bs = buffer_size();
-                if(index < size() / 2) {
+                if (start == finish) {
+                    push_back(value);
+                    return insert(finish, n - 1, value);
+                }
+                else if(index < size() / 2) { //cout << "left called " << n << endl;// debug();
                     size_type remaining = left_space();
                     if(remaining <= n) 
-                        map_expand((n - remaining) / bs + 1, true);
-                    alloc_buffer_left((n - (start.cur - start.buffer_start)) / bs + 1); 
+                        map_expand((n - remaining) / bs + 1, true);//debug();
+                    if(n > start.cur - start.buffer_start)
+                        alloc_buffer_left((n - (start.cur - start.buffer_start) - 1) / bs + 1); 
                     move_data(start, start + index, start - n);
                     ZJ_uninitialized_fill_n(start + index - n, n, value);
                     start -= n;
                     return start + index + n;
                 } 
-                else { index = finish - pos;
+                else { index = finish - pos; //cout << "right called " << n << endl;// debug();
                     size_type remaining = right_space();
                     if(remaining <= n) 
-                        map_expand((n - remaining) / bs + 1, false);
-                    alloc_buffer_right((n - (finish.buffer_finish - finish.cur) - 1) / bs + 1);
+                        map_expand((n - remaining) / bs + 1, false);// cout << "finish.buffer_finish - finish.cur" << finish.buffer_finish - finish.cur << endl;
+                    if(n > finish.buffer_finish - finish.cur - 1) 
+                        alloc_buffer_right((n - (finish.buffer_finish - finish.cur)) / bs + 1);
                     move_data(finish - index, finish, finish - index + n);
                     ZJ_uninitialized_fill_n(finish - index, n, value);
                     finish += n;
@@ -293,6 +311,8 @@ namespace ZJ {
             //iterator insert(iterator first, iterator last, iterator dest) {}
 
             iterator erase(iterator pos) { // does not shrink 
+                return erase(pos, pos + 1);
+                /*
                 difference_type index = pos - start;
                 if(index < size() / 2) {
                     move_data(start, pos, start + 1);
@@ -304,6 +324,7 @@ namespace ZJ {
                     --finish;
                     ZJ_destroy(finish);
                 }
+                */
             }
 
             iterator erase(iterator first, iterator last) {
@@ -413,7 +434,7 @@ namespace ZJ {
                 }
             }
 
-            void alloc_buffer_right(size_t n) { 
+            void alloc_buffer_right(size_t n) { cout << "alloc right" << n << endl;
                 size_t bs = buffer_size();
                 map_pointer mptr = finish.node + 1;
                 for(; n > 0; n--){
