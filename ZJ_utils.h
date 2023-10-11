@@ -167,6 +167,23 @@ namespace ZJ {
         typedef typename traits<typename OutputIter::value_type>::IS_POD IS_POD;
         return __ZJ_uninitialized_fill_n(dest, n, value, IS_POD());
     }
+
+    template <typename InputIter, typename OutputIter>
+    inline OutputIter ZJ_copy(InputIter first, InputIter last, OutputIter dest, bool copy2left = true) {
+        if(first == last) return dest;
+        if (copy2left) { 
+            for(; first != last; ++first, ++dest)
+                *dest = *first;
+        }
+        else {
+            dest += (last - first);
+            --dest, --last;
+            for(; last != first; --last, --dest)
+                *dest = *last;
+            *dest = *last;
+        }
+        return dest;
+    }
 }
 
 

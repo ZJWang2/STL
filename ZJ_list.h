@@ -36,20 +36,14 @@ namespace ZJ {
             {}
     };
 
-    template <typename T, typename Alloc>
-    class list;
-
     template <typename T, typename pointer, typename reference>
     class list_iterator : public iterator_base<bidirectional_iterator_tag, T> {
-        protected : 
+        private : 
             list_node<T>* iter;
         public : 
             typedef list_iterator<T, T*, T&>                iterator;
             typedef list_iterator<T, pointer, reference>    self;
             // such design allows conversion from iter to const_iter
-        
-        //template <typename , typename >
-        //friend class list;
 
         public : 
             list_iterator() : iter(0) {}
@@ -130,6 +124,19 @@ namespace ZJ {
                 node = new list_node<T>();
             }
 
+            list(const_iterator first, const_iterator last) {
+                node = new list_node<T>();
+                for(; first != last; ++first)
+                    insert(end(), *first);
+            }
+
+            list(const list<T>& lst) {
+                node = new list_node<T>();
+                for(const_iterator it = lst.begin(); it != lst.end(); ++it) {
+                    insert(end(), *it);
+                }
+            }
+
             iterator begin() {
                 return iterator((*node).next);
             }
@@ -173,7 +180,7 @@ namespace ZJ {
 
             iterator insert(iterator pos, const T& value) {
                 node_pointer tmp = pos->prev;
-                node_pointer new_node = create_node(value);
+                node_pointer new_node = create_node(value); 
                 tmp->next = new_node;
                 new_node->next = pos.get_raw_pointer();
                 pos->prev = new_node;
@@ -282,9 +289,7 @@ namespace ZJ {
                 }
             }
 
-            void sort() {
-
-            }
+            void sort() {} // a bad design to have a sort in list
 
         protected : 
             node_pointer create_node(const T& value) {
@@ -297,7 +302,7 @@ namespace ZJ {
                 ZJ_destroy(it);
                 Alloc::deallocate(it.get_raw_pointer(), sizeof(it.get_raw_pointer()));
             }
-            public : 
+
             void transfer(iterator pos, iterator first, iterator last) {
                 iterator first_prev(first->prev);
                 iterator last_prev(last->prev);

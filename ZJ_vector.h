@@ -114,12 +114,20 @@ namespace ZJ {
             iterator storage_end;
         
         public : 
-            vector() : start(0), finish(0), storage_end(0) {}
+            vector() : start(), finish(), storage_end() {}
 
             vector(size_type n) {alloc_construct((size_type)n, T()); }
  
             vector(size_type n, const T& value) {alloc_construct((size_type)n, value); }
 
+            vector(const_iterator first, const_iterator last) {
+                size_type n = last - first;
+                start = vector_allocator::allocate(n);
+                ZJ_uninitialized_copy(first, last, begin());
+                finish = start + n;
+                storage_end = start + n;
+            }
+            
             vector(const vector<T>& v) {
                 start = vector_allocator::allocate(v.capacity());
                 ZJ_uninitialized_copy(v.begin(), v.end(), begin());
@@ -193,7 +201,7 @@ namespace ZJ {
             }
 
             void push_back(const value_type& value) {
-                if(finish == storage_end) resize(2 * capacity());
+                if(finish == storage_end) resize(2 * capacity() + 1);
                 ZJ_construct(finish, value);
                 ++finish;
             }
@@ -222,7 +230,12 @@ namespace ZJ {
                 }
             }
             
-            void insert(iterator pos, iterator first, iterator last) {
+            // TO BE FIXED: cannot handle iterator of different type
+            // cannot handle iterator from current vector - iterator invalidation
+            // use a template 
+            // tempalte <typename InputIter, typename OutputIter>
+            // void insert(OutputIter pos, InputIter first, InputIter last)
+            void insert(iterator pos, iterator first, iterator last) { 
                 size_type n = last - first;
                 if (n + size() > capacity()) {
                     iterator new_start = vector_allocator::allocate(2 * (n + size()));

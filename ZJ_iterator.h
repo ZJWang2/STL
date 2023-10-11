@@ -24,6 +24,13 @@ namespace ZJ {
     struct bidirectional_iterator_tag : public forward_iterator_tag { };
     struct random_access_iterator_tag : public bidirectional_iterator_tag { };
 
+    /**
+     * The following virtual classes will not be used.
+     * They only serve as a template in the actual iterator design.
+     * Plus, due to performance it is not a good practice to invlove
+     * too many inheritance in iterator design.
+    */
+
     template <typename T, typename Ptr, typename Ref, typename Diff>
     class input_iterator : public iterator_base<input_iterator_tag, T> {
         public : 
