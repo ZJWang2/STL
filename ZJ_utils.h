@@ -19,6 +19,14 @@ namespace ZJ {
     inline void ZJ_uninitialized_fill(OutputIter first, OutputIter last, const Value& value);
     template <typename OutputIter, typename Value>
     inline OutputIter ZJ_uninitialized_fill_n(OutputIter dest, size_t n, const Value& value);
+    template <typename InputIter, typename OutputIter>
+    inline OutputIter ZJ_copy(InputIter first, InputIter last, OutputIter dest, bool copy2left = true);
+    template<typename Iter>
+    inline typename Iter::value_type get_value_type(Iter iter);
+    template<typename Iter>
+    inline typename Iter::size_type get_size_type(Iter iter);
+    template<typename Iter>
+    inline typename Iter::difference_type get_difference_type(Iter iter);
 
     struct TRUE_TAG {};
     struct FALSE_TAG {};
@@ -169,7 +177,7 @@ namespace ZJ {
     }
 
     template <typename InputIter, typename OutputIter>
-    inline OutputIter ZJ_copy(InputIter first, InputIter last, OutputIter dest, bool copy2left = true) {
+    inline OutputIter ZJ_copy(InputIter first, InputIter last, OutputIter dest, bool copy2left) {
         if(first == last) return dest;
         if (copy2left) { 
             for(; first != last; ++first, ++dest)
@@ -183,6 +191,21 @@ namespace ZJ {
             *dest = *last;
         }
         return dest;
+    }
+
+    template<typename Iter>
+    inline typename Iter::value_type get_value_type(Iter iter) {
+        return typename Iter::value_type();
+    }
+
+    template<typename Iter>
+    inline typename Iter::size_type get_size_type(Iter iter) {
+        return typename Iter::size_type();
+    }
+
+    template<typename Iter>
+    inline typename Iter::difference_type get_difference_type(Iter iter) {
+        return typename Iter::difference_type();
     }
 }
 

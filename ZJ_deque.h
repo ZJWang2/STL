@@ -8,7 +8,6 @@
 #include "ZJ_alloc.h"
 #include "ZJ_utils.h"
 #include "ZJ_iterator.h"
-#include <iostream>
 
 
 namespace ZJ {
@@ -283,10 +282,10 @@ namespace ZJ {
                     push_back(value);
                     return insert(finish, n - 1, value);
                 }
-                else if(index < size() / 2) { //cout << "left called " << n << endl;// debug();
+                else if(index < size() / 2) { 
                     size_type remaining = left_space();
                     if(remaining <= n) 
-                        map_expand((n - remaining) / bs + 1, true);//debug();
+                        map_expand((n - remaining) / bs + 1, true);
                     if(n > start.cur - start.buffer_start)
                         alloc_buffer_left((n - (start.cur - start.buffer_start) - 1) / bs + 1); 
                     move_data(start, start + index, start - n);
@@ -294,10 +293,10 @@ namespace ZJ {
                     start -= n;
                     return start + index + n;
                 } 
-                else { index = finish - pos; //cout << "right called " << n << endl;// debug();
+                else { index = finish - pos;
                     size_type remaining = right_space();
                     if(remaining <= n) 
-                        map_expand((n - remaining) / bs + 1, false);// cout << "finish.buffer_finish - finish.cur" << finish.buffer_finish - finish.cur << endl;
+                        map_expand((n - remaining) / bs + 1, false);
                     if(n > finish.buffer_finish - finish.cur - 1) 
                         alloc_buffer_right((n - (finish.buffer_finish - finish.cur)) / bs + 1);
                     move_data(finish - index, finish, finish - index + n);
@@ -309,7 +308,6 @@ namespace ZJ {
 
             // to be implemented: allow general iterator input
             //iterator insert(iterator first, iterator last, iterator dest) {}
-
             iterator erase(iterator pos) { // does not shrink 
                 return erase(pos, pos + 1);
                 /*
@@ -331,17 +329,23 @@ namespace ZJ {
                 difference_type left_part = first - start;
                 difference_type right_part = finish - last;
                 difference_type n = last - first;
-                iterator res;
                 if(left_part < right_part) {
-                    res = ZJ_copy(start, first, start + n, false);
-                    res += n;
-                    start += n;
+                    iterator new_start = start + n;
+                    ZJ_copy(start, first, start + n, false);
+                    ZJ_destroy(start, new_start);
+                    for(map_pointer ptr = start.node; ptr < new_start.node; ++ptr)
+                        data_allocator::deallocate(*ptr, buffer_size());
+                    start = new_start;
                 }
                 else {
-                    res = ZJ_copy(last, finish, last - n, true);
-                    finish -= n;
+                    iterator new_finish = finish - n;
+                    ZJ_copy(last, finish, last - n, true);
+                    ZJ_destroy(new_finish, finish);
+                    for(map_pointer ptr = new_finish.node + 1; ptr <= finish.node; ++ptr)
+                        data_allocator::deallocate(*ptr, buffer_size());
+                    finish = new_finish;
                 }
-                return res;
+                return start + left_part;
             }
 
             void clear() {
@@ -408,7 +412,7 @@ namespace ZJ {
                 start.node = new_map + map_start;
             }
         
-        public : 
+        protected : 
             void move_data(iterator first, iterator last, iterator dest) {
                 difference_type n = dest - first;
                 if(n > 0) ZJ_copy(first, last, dest, false);
@@ -434,7 +438,7 @@ namespace ZJ {
                 }
             }
 
-            void alloc_buffer_right(size_t n) { cout << "alloc right" << n << endl;
+            void alloc_buffer_right(size_t n) {
                 size_t bs = buffer_size();
                 map_pointer mptr = finish.node + 1;
                 for(; n > 0; n--){
@@ -442,29 +446,6 @@ namespace ZJ {
                     ++mptr;
                 }
             }
-            
-            size_type ms() const {return map_size;}
-
-            void debug(const char* str = "") {
-                size_t bs = buffer_size();
-                cout << str << endl;
-                cout << "size: " << size() << endl;
-                cout << "map size: " << ms() << endl;
-                cout << "left remaining: " << left_space() << endl;
-                cout << "right remaining: " << right_space() << endl;
-                cout << "start: " << start.node - map << " - " << start.cur - start.buffer_start << endl;
-                cout << "finish: "  << finish.node - map << " - " << finish.cur -finish.buffer_start << endl;
-                for(int i=0; i<ms(); i++){
-                    cout << "ms[] " << i << " = " << map[i];
-                    if(map[i] != nullptr) {
-                        cout << " : ";
-                        for(int j=0; j<bs; j++)
-                            cout << map[i][j] << " ";
-                    }
-                    cout << endl;
-                }
-            }
-
     };
 
 }

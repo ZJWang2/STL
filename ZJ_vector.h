@@ -101,9 +101,11 @@ namespace ZJ {
         public : 
             typedef T                           value_type;
             typedef T*                          pointer;
+            typedef const T*                    const_pointer;
             typedef vector_iterator<T>          iterator;
             typedef vector_iterator<const T>    const_iterator;
             typedef T&                          reference;
+            typedef const T&                    const_reference;
             typedef size_t                      size_type;
             typedef ptrdiff_t                   difference_type;
         
@@ -166,7 +168,11 @@ namespace ZJ {
 
             reference front() {return *begin();}
 
+            const_reference front() const {return *begin();}
+
             reference back() {return *(--end());}
+
+            const_reference back() const {return *(--end());}
 
             size_type size() const {
                 return finish - start;

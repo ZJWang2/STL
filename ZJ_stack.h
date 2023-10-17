@@ -9,18 +9,18 @@ using namespace std;
 
 namespace ZJ {
 
-    template <typename T, typename Sequence = deque<T>>
+    template <typename T, typename Container = deque<T>>
     class stack {
 
         protected : 
-            Sequence c;
+            Container c;
 
         public : 
-            typedef typename Sequence::value_type        value_type;
-            typedef typename Sequence::reference         reference;
-            typedef typename Sequence::const_reference   const_reference;
-            typedef typename Sequence::size_type         size_type;
-            typedef typename Sequence::difference_type   difference_type;
+            typedef typename Container::value_type        value_type;
+            typedef typename Container::reference         reference;
+            typedef typename Container::const_reference   const_reference;
+            typedef typename Container::size_type         size_type;
+            typedef typename Container::difference_type   difference_type;
 
             stack() : c() {}
 
