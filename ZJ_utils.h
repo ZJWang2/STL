@@ -21,6 +21,8 @@ namespace ZJ {
     inline OutputIter ZJ_uninitialized_fill_n(OutputIter dest, size_t n, const Value& value);
     template <typename InputIter, typename OutputIter>
     inline OutputIter ZJ_copy(InputIter first, InputIter last, OutputIter dest, bool copy2left = true);
+    template <typename T>
+    inline void ZJ_swap(T& a, T& b);
     template<typename Iter>
     inline typename Iter::value_type get_value_type(Iter iter);
     template<typename Iter>
@@ -191,6 +193,13 @@ namespace ZJ {
             *dest = *last;
         }
         return dest;
+    }
+
+    template <typename T>
+    inline void ZJ_swap(T& a, T& b) {
+        T tmp = a;
+        a = b;
+        b = tmp;
     }
 
     template<typename Iter>
