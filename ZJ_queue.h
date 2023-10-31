@@ -9,10 +9,11 @@ using namespace std;
 
 namespace ZJ {
 
-    template <typename T, typename Container = deque<T>>
+    template <typename T>
     class queue {
 
-        protected : 
+        protected :
+            typedef deque<T>                              Container; 
             Container c;
 
         public : 

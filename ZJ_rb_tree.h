@@ -117,7 +117,7 @@ namespace ZJ {
         rb_iterator(const iterator& it) { node = it.node; }
 
         reference operator*() {return node_pointer(node)->data; }
-        //pointer operator->() {return &(operator*()); }
+        pointer operator->() {return &(operator*()); }
 
         self operator++() {
             increment();
@@ -209,11 +209,21 @@ namespace ZJ {
 
             iterator begin() {return leftmost();}
 
+            iterator begin() const { return leftmost(); }
+
+            const_iterator cbegin() const {return leftmost();}
+
             iterator end() {return header;}
+
+            iterator end() const {return header;}
+
+            const_iterator cend() const {return header;}
             
-            bool empty() {return node_count == 0;}
+            bool empty() const {return node_count == 0;}
             
-            size_type size() {return node_count;}
+            size_type size() const {return node_count;}
+
+            Compare key_comp() const {return key_compare;}
 
             void clear() {
                 if(node_count != 0) {
@@ -237,6 +247,13 @@ namespace ZJ {
                 return __insert(x, y, value);
             }
 
+            void insert_equal(iterator first, iterator last) {
+                while(first != last) {
+                    insert_equal(*first);
+                    ++first;
+                }
+            }
+
             pair<iterator, bool> insert_unique(const value_type& value) {
                 node_pointer x = root();
                 node_pointer y = header;
@@ -249,13 +266,20 @@ namespace ZJ {
                 }
                 iterator j = y;
                 if(cmp)
-                    if(j == begin())
+                    if(j == begin()) 
                         return pair<iterator, bool>(__insert(x, y, value), true);
                     else
                         --j;
                 if(key_compare(key(j.node), kov))
                     return pair<iterator, bool>(__insert(x, y, value), true);
                 return pair<iterator, bool>(j, false);
+            }
+
+            void insert_unique(iterator first, iterator last) {
+                while(first != last) {
+                    insert_unique(*first);
+                    ++first;
+                }
             }
 
             void erase(iterator pos) {
@@ -292,9 +316,24 @@ namespace ZJ {
                 return (j == end() || key_compare(k, key(j.node))) ? end() : j;
             }
 
-            size_type count(const Key& k) {
-                iterator it_upper = upper_bound(k);
-                iterator it_lower = lower_bound(k);
+            const_iterator find(const Key& k) const { 
+                node_pointer y = header;
+                node_pointer x = root();
+                while(x != 0) {
+                    if(!key_compare(key(x), k)) {
+                        y = x;
+                        x = left(x);
+                    }
+                    else x = right(x);
+                }
+                //iterator j = y;
+                const_iterator j = y;
+                return (j == cend() || key_compare(k, key(j.node))) ? cend() : j;
+            }
+
+            size_type count(const Key& k) const {
+                const_iterator it_upper = upper_bound(k);
+                const_iterator it_lower = lower_bound(k);
                 // compute the distance between two iterators
                 // could use distance(), which is O(n)
                 // this go-through is O(n) as well, same as distance()
@@ -319,6 +358,19 @@ namespace ZJ {
                 return iterator(y);
             }
 
+            const_iterator lower_bound(const Key& k) const {
+                node_pointer y = header;
+                node_pointer x = root();
+                while(x != 0) {
+                    if(!key_compare(key(x), k)) {
+                        y = x;
+                        x = left(x);
+                    }
+                    else x = right(x);
+                }
+                return const_iterator(y);
+            }
+
             iterator upper_bound(const Key& k) {
                 node_pointer y = header;
                 node_pointer x = root();
@@ -330,6 +382,27 @@ namespace ZJ {
                     else x = right(x);
                 }
                 return iterator(y);
+            }
+
+            const_iterator upper_bound(const Key& k) const {
+                node_pointer y = header;
+                node_pointer x = root();
+                while(x != 0) {
+                    if(key_compare(k, key(x))) {
+                        y = x;
+                        x = left(x);
+                    }
+                    else x = right(x);
+                }
+                return const_iterator(y);
+            }
+
+            pair<iterator, iterator> equal_range(const Key& k) {
+                return pair<iterator, iterator>(lower_bound(k), upper_bound(k));
+            }
+
+            pair<const_iterator, const_iterator> equal_range(const Key& k) const {
+                return pair<const_iterator, const_iterator>(lower_bound(k), upper_bound(k));
             }
 
             void print() { //return ;
@@ -352,13 +425,12 @@ namespace ZJ {
                 node_pointer x = (node_pointer)x_;
                 node_pointer y = (node_pointer)y_;
                 node_pointer z; 
-                if(x != 0 || key_compare(KeyOfValue()(value), key(y))){
+                if(y == header || x != 0 || key_compare(KeyOfValue()(value), key(y))){
                     z = create_node(value);
                     left(y) = z;
                     if(y == header) {
                         root() = z;
                         rightmost() = z;
-                        leftmost() = z;
                     }
                     else if(y == leftmost()) leftmost() = z;
                 }
@@ -377,7 +449,7 @@ namespace ZJ {
 
             inline void rebalance(base_pointer x) {
                 x->color = RED;
-                while(x != root() && x->parent->color == RED) {
+                while(x != root() && x->parent->color == RED) { 
                     if(x->parent == x->parent->parent->left) {
                         base_pointer y = x->parent->parent->right; // y is x's uncle
                         if(y && y->color == RED) {
@@ -534,19 +606,6 @@ namespace ZJ {
                 return y;
             }
 
-            
-/*          // this is an iterative version of erase_aux
-            void erase_aux(base_pointer x) {
-                // erase without rebalancing
-                while(x != 0) {
-                    erase_aux(right(x));
-                    base_pointer y = left(x);
-                    destroy_node((node_pointer)x);
-                    x = y;
-                }
-            }
-*/
-
             // this is a recursive version of erase_aux
             void erase_aux(base_pointer x) {
                 // erase without rebalancing
@@ -667,7 +726,7 @@ namespace ZJ {
                 Alloc::deallocate(ptr, sizeof(ptr));
             }
 
-};
+    };
 
 }
 
