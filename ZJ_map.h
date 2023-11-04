@@ -135,6 +135,10 @@ namespace ZJ {
             pair<const_iterator, const_iterator> equal_range(const key_type& k) const {
                 return c.equal_range(k);
             }
+
+            void swap(map& rhs) {
+                c.swap(rhs.c);
+            }
     };
 
 
@@ -262,6 +266,10 @@ namespace ZJ {
 
             pair<const_iterator, const_iterator> equal_range(const key_type& k) const {
                 return c.equal_range(k);
+            }
+
+            void swap(multimap& rhs) {
+                c.swap(rhs.c);
             }
     };
 

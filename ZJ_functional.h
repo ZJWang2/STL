@@ -73,7 +73,7 @@ namespace ZJ {
 
     template <class T>
     struct identity : public unary_function<T, T> {
-    const T& operator()(const T& x) const {return x;}
+        const T& operator()(const T& x) const {return x;}
     };
 
     template <class Pair>

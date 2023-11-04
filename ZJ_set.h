@@ -116,6 +116,10 @@ namespace ZJ {
             pair<const_iterator, const_iterator> equal_reange(const value_type& value) const {
                 return c.equal_range(value);
             }
+
+            void swap(set& rhs) {
+                c.swap(rhs.c);
+            }
     };
 
 
@@ -222,6 +226,10 @@ namespace ZJ {
 
             pair<const_iterator, const_iterator> equal_reange(const value_type& value) const {
                 return c.equal_range(value);
+            }
+
+            void swap(multiset& rhs) {
+                c.swap(rhs.c);
             }
 
     };

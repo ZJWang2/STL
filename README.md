@@ -24,7 +24,9 @@ Logs:
 
   - red black tree
   - pair and functional object (functor)
-
 - **10/30/23**
   - set, map, multiset, multimap
   - fix bugs in red black tree (tree copying)
+- **11/4/23**
+  - hashtable
+  - unordered_set, unordered_map, unordered_multiset, unordered_multimap

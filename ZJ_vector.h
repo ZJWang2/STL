@@ -190,7 +190,7 @@ namespace ZJ {
                 return *(start + idx);
             }
 
-            void resize(size_type new_size) {
+            void reserve(size_type new_size) {
                 if(new_size < size()) {  // shrinking
                     ZJ_destroy(start + new_size, finish);
                     finish = start + new_size;
@@ -207,7 +207,7 @@ namespace ZJ {
             }
 
             void push_back(const value_type& value) {
-                if(finish == storage_end) resize(2 * capacity() + 1);
+                if(finish == storage_end) reserve(2 * capacity() + 1);
                 ZJ_construct(finish, value);
                 ++finish;
             }
@@ -273,6 +273,12 @@ namespace ZJ {
             }
 
             void clear() {erase(start, finish); }
+
+            void swap(vector<T>& rhs) {
+                ZJ_swap(start, rhs.start);
+                ZJ_swap(finish, rhs.finish);
+                ZJ_swap(storage_end, rhs.storage_end);
+            }
         
         protected : 
             void alloc_construct(size_type n, const T& value) {

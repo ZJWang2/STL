@@ -405,6 +405,12 @@ namespace ZJ {
                 return pair<const_iterator, const_iterator>(lower_bound(k), upper_bound(k));
             }
 
+            void swap(rb_tree<Key, Value, KeyOfValue, Compare>& rhs) {
+                ZJ_swap(header, rhs.header);
+                ZJ_swap(node_count, rhs.node_count);
+                ZJ_swap(key_compare, rhs.key_compare);
+            }
+
             void print() { //return ;
                 node_pointer cur = header;
                 cout << "size: " << size() << endl;

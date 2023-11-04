@@ -46,14 +46,9 @@ namespace ZJ {
                 c.pop_back();
             }
             
-            /*
-            void print() {
-                cout << "vector size = " << c.size() << endl;
-                for(int i=0; i<c.size(); i++)
-                    cout << c[i] << " " ;
-                cout << "\n\n" ;
+            void swap(priority_queue<T>& rhs) {
+                c.swap(rhs.c);
             }
-            */
 
     };
     

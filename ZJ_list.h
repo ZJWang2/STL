@@ -291,6 +291,10 @@ namespace ZJ {
 
             void sort() {} // a bad design to have a sort in list
 
+            void swap(list<T>& lst) {
+                ZJ_swap(node, lst.node);
+            }
+
         protected : 
             node_pointer create_node(const T& value) {
                 node_pointer ptr =  list_allocator::allocate(1);
