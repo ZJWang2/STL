@@ -21,7 +21,6 @@ Logs:
   - heap, priority_queue
   - Fix bug in deque (erase)
 - **10/29/23**
-
   - red black tree
   - pair and functional object (functor)
 - **10/30/23**
@@ -30,3 +29,4 @@ Logs:
 - **11/4/23**
   - hashtable
   - unordered_set, unordered_map, unordered_multiset, unordered_multimap
+  - add swap for all containers
